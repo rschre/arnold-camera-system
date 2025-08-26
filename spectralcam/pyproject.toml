@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spectralcam"
+version = "1.0"
+description = "A library to handle GigE Vision hyperspectral cameras."
+readme = "README.md"
+requires-python = ">=3.7, <3.12"
+authors = [
+    { name = "Jarno Pasonen", email = "jarno.k.pasonen@jyu.fi" }
+]
+urls = { git = "https://gitlab.jyu.fi/jpasonen/linear-scanner-controller" }
+dependencies = [
+    "numpy~=1.21",
+    "genicam>=1.2",
+    "psutil>=5.9",
+    "vispy>=0.6",
+]
+[project.optional-dependencies]
+spectralcam-preview = [
+    "pyqt5-qt==5.15.2",
+    "pyqt5==5.15.11",
+    "pyqt5-sip==12.17.0",
+]
+
+# Pre-compiled extension modules are not copied automatically so we do it manually ¯\_(ツ)_/¯
+[tool.setuptools.package-data]
+spectralcam = ["**/*.so", "**/*.pyd"]
