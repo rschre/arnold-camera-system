@@ -1,5 +1,7 @@
 # arnold-camera-system
 
+### TODO: REPLACE PLACEHOLDER TEXT
+
 Short description: A concise one-line summary of what arnold-camera-system does and who it is for.
 
 ## Table of contents
@@ -27,7 +29,7 @@ List required tools and versions:
 - OS: Windows / macOS / Linux
 - Runtime: Node.js >= X, Python >= X, .NET, etc.
 - Hardware: Camera model(s) or interfaces
-- Other: Docker, specific drivers, firmware
+- Other: Packaged MvImport Module from MVS SDK
 
 ## Installation
 Clone the repo and install dependencies:

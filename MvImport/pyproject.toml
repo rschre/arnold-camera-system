@@ -5,25 +5,12 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "MvImport"
 version = "0.0.1"  # update to match setup.py
-description = "MvImport package for the Arnold camera system"  # update as needed
+description = "MvImport package for the Arnold camera system"  
 readme = "README.md"
 requires-python = ">=3.8"  # update to match setup.py
 authors = [
-    { name = "Your Name", email = "you@example.com" }
+    { name = "Hikrobot", email = "global.support@hikrobotics.com" }
 ]
-license = { text = "MIT" }  # update to match setup.py
 keywords = ["arnold", "camera", "mvimport"]
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-]
-
-# Copy dependencies from setup.py into this list
-dependencies = [
-    # "some-package>=1.2.3",
-]
-
 [tool.setuptools.packages.find]
 where = ["."]
-# include = ["MvImport*"]
