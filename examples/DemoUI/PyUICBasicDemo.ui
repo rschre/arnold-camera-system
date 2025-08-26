@@ -1,0 +1,107 @@
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+    ...
+    <widget class="QGroupBox" name="groupInit">
+        ...
+        <property name="title">
+         <string>Initialization</string>
+        </property>
+        ...
+        <widget class="QPushButton" name="bnClose">
+            ...
+            <property name="text">
+             <string>Close Device</string>
+            </property>
+        </widget>
+        <widget class="QPushButton" name="bnOpen">
+            <property name="text">
+             <string>Open Device</string>
+            </property>
+        </widget>
+        <widget class="QPushButton" name="bnEnum">
+            <property name="text">
+             <string>Find Device</string>
+            </property>
+        </widget>
+        ...
+    </widget>
+    <widget class="QGroupBox" name="groupGrab">
+        ...
+        <property name="title">
+         <string>Acquisition</string>
+        </property>
+        ...
+        <widget class="QPushButton" name="bnSaveImage">
+            ...
+            <property name="text">
+             <string>Save Image</string>
+            </property>
+        </widget>
+        <widget class="QRadioButton" name="radioContinueMode">
+            <property name="text">
+             <string>Continuous Mode</string>
+            </property>
+        </widget>
+        <widget class="QRadioButton" name="radioTriggerMode">
+            <property name="text">
+             <string>Trigger Mode</string>
+            </property>
+        </widget>
+        <widget class="QPushButton" name="bnStop">
+            ...
+            <property name="text">
+             <string>Stop Acquisition</string>
+            </property>
+        </widget>
+        <widget class="QPushButton" name="bnStart">
+            ...
+            <property name="text">
+             <string>Start Acquisition</string>
+            </property>
+        </widget>
+        <widget class="QPushButton" name="bnSoftwareTrigger">
+            ...
+            <property name="text">
+             <string>Software Trigger Once</string>
+            </property>
+        </widget>
+        ...
+    </widget>
+    <widget class="QGroupBox" name="groupParam">
+        ...
+        <property name="title">
+         <string>Parameters</string>
+        </property>
+        ...
+        <widget class="QLabel" name="label_6">
+            <property name="text">
+             <string>Frame Rate</string>
+            </property>
+        </widget>
+        <widget class="QLabel" name="label_5">
+            <property name="text">
+             <string>Gain</string>
+            </property>
+        </widget>
+        <widget class="QLabel" name="label_4">
+            <property name="text">
+             <string>Exposure</string>
+            </property>
+        </widget>
+        <widget class="QPushButton" name="bnGetParam">
+            <property name="text">
+             <string>Get Parameters</string>
+            </property>
+        </widget>
+        <widget class="QPushButton" name="bnSetParam">
+            <property name="text">
+             <string>Set Parameters</string>
+            </property>
+        </widget>
+        ...
+    </widget>
+    ...
+ </widget>
+ ...
+</ui>
