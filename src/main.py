@@ -4,6 +4,7 @@ import time
 
 import cv2
 import numpy as np
+from MvCameraControl_class import _MV_DISPLAY_FRAME_INFO_
 
 from camera.hsi.fx17_wrapper import FX17CameraWrapper
 from camera.rgb.mvch250_param_types import MV_CH250_PARAM_TYPE
@@ -12,8 +13,11 @@ from camera.rgb.mvch250_wrapper import MVCH250CameraWrapper
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+first_frame_displayed = False
 
-def show_frame_callback(frame: np.ndarray, frame_info):
+
+def show_frame_callback(frame: np.ndarray, frame_info: _MV_DISPLAY_FRAME_INFO_):
+    global first_frame_displayed
     try:
         width = frame_info.nWidth
         height = frame_info.nHeight
@@ -45,7 +49,10 @@ def show_frame_callback(frame: np.ndarray, frame_info):
                 f"Buffer size {buffer_size} does not match expected Bayer size for 8-bit ({expected_size_8bit}) or 16-bit ({expected_size_16bit})"
             )
             return
-
+        if img_rgb.max() == 0:
+            logger.warning(
+                "Image is all black after conversion. Check exposure, Bayer pattern, or camera output."
+            )
         # Resize for display if too large
         max_display_width = 1280
         max_display_height = 720
@@ -69,12 +76,14 @@ def show_frame_callback(frame: np.ndarray, frame_info):
             cv2.LINE_AA,
         )
         cv2.imshow("MV-CH250 Live (RGB)", img_rgb_disp)
+        first_frame_displayed = True
         cv2.waitKey(1)
     except Exception as e:
         logger.error(f"Error displaying frame: {e}", exc_info=True)
 
 
 def main():
+    global first_frame_displayed
     cam_rgb = MVCH250CameraWrapper(frame_callback=show_frame_callback)
 
     cam_rgb.open()
@@ -90,8 +99,14 @@ def main():
 
     try:
         cam_rgb.start_grabbing()
+
+        window_name = "MV-CH250 Live (RGB)"
         while cam_rgb._is_grabbing:
-            time.sleep(0.05)
+            if first_frame_displayed:
+                if cv2.getWindowProperty(window_name, cv2.WND_PROP_VISIBLE) < 1:
+                    cam_rgb._is_grabbing = False
+                    break
+            time.sleep(0.1)
     except Exception as e:
         logger.warning(f"Failed to start grabbing: {e}")
     finally:

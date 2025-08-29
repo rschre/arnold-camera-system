@@ -1,4 +1,5 @@
 import logging
+import tomllib
 
 from MvCameraControl_class import (
     MV_CC_DEVICE_INFO,
@@ -85,3 +86,9 @@ def list_devices(device_info_list):
         if len(devices_list) == 0:
             logger.debug("No GigE devices found.")
     return devices_list
+
+
+def get_config(config_path: str) -> dict:
+    with open(config_path, "rb") as f:
+        config = tomllib.load(f)
+    return config

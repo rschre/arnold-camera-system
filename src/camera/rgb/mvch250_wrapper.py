@@ -24,10 +24,10 @@ from MvCameraControl_class import (
     memset,
     sizeof,
 )
-from MvErrorDefine_const import MV_E_CALLORDER, MV_OK
+from MvErrorDefine_const import MV_OK
 
 from camera.rgb.mvch250_param_types import MV_CH250_PARAM_TYPE
-from camera.rgb.mvch250_utilities import decoding_char, list_devices, to_hex_str
+from camera.rgb.mvch250_utilities import list_devices, to_hex_str
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +35,12 @@ logger = logging.getLogger(__name__)
 class MVCH250CameraWrapper:
     """
     Single-class implementation for Hikrobot MVS camera control.
+    Leverages the MVS SDK for camera operations.
+
+    Args:
+        width (int): Desired image width. Default/max is 5120.
+        height (int): Desired image height. Default/max is 5120.
+        frame_callback (Callable[[np.ndarray, Any], None], optional): Optional callback function to process each frame as it is grabbed. The function should accept a numpy array representing the image and additional frame info.
     """
 
     def __init__(
@@ -62,7 +68,9 @@ class MVCH250CameraWrapper:
         self._thread_handle: Optional[threading.Thread] = None
         self._buffer_lock: threading.Lock = threading.Lock()
 
-        self._frame_callback = frame_callback
+        self._frame_callback: Optional[Callable[[np.ndarray, Any], None]] = (
+            frame_callback
+        )
 
     def _init_mvs_sdk(self):
         try:
@@ -228,12 +236,20 @@ class MVCH250CameraWrapper:
 
         try:
             self._is_grabbing = True
-            self._thread_handle = threading.Thread(target=self._grab_images)
+            self._thread_handle = threading.Thread(target=self._grab_thread)
             self._thread_handle.start()
         except Exception as e:
             logger.error(f"start grabbing thread fail! {e}")
 
-    def _grab_images(self) -> None:
+    def stop_grabbing(self) -> None:
+        if self._is_grabbing:
+            self._is_grabbing = False
+        if self._thread_handle is not None:
+            self._thread_handle.join()
+            self._thread_handle = None
+
+    def _grab_thread(self) -> None:
+        """Thread to grab images from the camera."""
         stOutFrame = MV_FRAME_OUT()
         memset(byref(stOutFrame), 0, sizeof(stOutFrame))
 
@@ -259,15 +275,6 @@ class MVCH250CameraWrapper:
                         finally:
                             self._buffer_lock.release()
 
-                        logger.debug(
-                            "got one frame: Width[%d], Height[%d], nFrameNum[%d], FrameLen[%d]"
-                            % (
-                                self.st_frame_info.nWidth,
-                                self.st_frame_info.nHeight,
-                                self.st_frame_info.nFrameNum,
-                                self.st_frame_info.nFrameLen,
-                            )
-                        )
                         # Call frame callback if set
                         if self._frame_callback is not None:
                             try:
