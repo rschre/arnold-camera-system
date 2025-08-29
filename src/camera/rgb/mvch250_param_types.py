@@ -1,6 +1,14 @@
 MV_CH250_PARAM_TYPE = {
-    "enPixelType": "MvGvspPixelType",
-    "AcquisitionFrameRate": "float",
-    "nHeight": "ushort",
-    "nWidth": "ushort",
+    "PixelFormat": "enum",
+    "AcquisitionMode": "enum",
+    "AcquisitionFrameRate": "float",  # fps
+    "OffsetX": "int",
+    "OffsetY": "int",
+    "Height": "int",
+    "Width": "int",
+    "ExposureMode": "enum",
+    "ExposureTime": "float",  # us
+    "ExposureAuto": "enum",
+    "Gain": "float",  # dB
+    "TriggerMode": "enum",
 }

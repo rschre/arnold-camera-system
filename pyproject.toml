@@ -11,43 +11,35 @@ dependencies = [
     "psutil>=5.9",
     "vispy>=0.6",
     "spectralcam",
+    "opencv-python>=4.11.0.86",
 ]
 authors = [
-  {name = "Raffael Schreiber", email = "raffael.schreiber@gmail.com"}
+    { name = "Raffael Schreiber", email = "raffael.schreiber@gmail.com" },
 ]
 
 [project.optional-dependencies]
-notebooks = [
-    "ipywidgets>=8.1.7",
-    "jupyter>=1.1.1",
-]
-demo-ui = [
-    "pyqt5==5.15.11",
-    "pyqt5-qt==5.15.2",
-    "pyqt5-sip==12.17.0",
-]
+notebooks = ["ipywidgets>=8.1.7", "jupyter>=1.1.1"]
+demo-ui = ["pyqt5==5.15.11", "pyqt5-qt==5.15.2", "pyqt5-sip==12.17.0"]
 
 [dependency-groups]
-dev = [
-    "mypy>=1.17.1",
-    "ruff>=0.12.9",
-]
+dev = ["mypy>=1.17.1", "ruff>=0.12.9"]
 
 [tool.uv]
-required-environments = [
-    "sys_platform == 'win32'"
-]
+required-environments = ["sys_platform == 'win32'"]
 
 [tool.uv.workspace]
-members = [
-    "MvImport",
-    "spectralcam",
-]
+members = ["MvImport", "spectralcam"]
 
 [tool.uv.sources]
 mvimport = { workspace = true }
 spectralcam = { workspace = true }
 
 [[tool.mypy.overrides]]
-module = ["MvCameraControl_class.*", "CamOperation_class.*", "MvErrorDefine_const", "CameraParams_header"]
+module = [
+    "MvCameraControl_class.*",
+    "CamOperation_class.*",
+    "MvErrorDefine_const",
+    "CameraParams_header",
+    "cv2",
+]
 ignore_missing_imports = true

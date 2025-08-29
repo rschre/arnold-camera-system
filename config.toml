@@ -1,0 +1,13 @@
+[cameras]
+[cameras.rgb]
+Width = 5120
+Height = 4600
+OffsetX = 0
+OffsetY = 348
+AcquisitionFrameRate = 1.0
+Gain = 6.031
+ExposureTime = 500_000.0
+
+[cameras.hsi]
+width = 5120
+height = 5120

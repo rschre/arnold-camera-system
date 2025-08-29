@@ -1,6 +1,7 @@
 import logging
+import threading
 import traceback
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 import numpy as np
 from CameraParams_header import MV_TRIGGER_MODE_OFF
@@ -8,13 +9,18 @@ from CamOperation_class import CameraOperation
 from MvCameraControl_class import (
     MV_CC_DEVICE_INFO,
     MV_CC_DEVICE_INFO_LIST,
+    MV_FRAME_OUT,
     MV_GIGE_DEVICE,
+    MVCC_ENUMVALUE,
     MVCC_FLOATVALUE,
+    MVCC_INTVALUE,
     POINTER,
     MvCamera,
     byref,
     c_bool,
+    c_ubyte,
     cast,
+    cdll,
     memset,
     sizeof,
 )
@@ -35,6 +41,7 @@ class MVCH250CameraWrapper:
         self,
         width: int = 5120,
         height: int = 5120,
+        frame_callback: Optional[Callable[[np.ndarray, Any], None]] = None,
     ):
         self.width = int(width)
         self.height = int(height)
@@ -47,15 +54,22 @@ class MVCH250CameraWrapper:
         self.mv_handler: Optional[CameraOperation] = self._get_mv_handler()
 
         self._is_open: bool = False
+        self._is_grabbing: bool = False
         self._last_frame: Optional[np.ndarray] = None
         self._last_timestamp: Optional[float] = None
+        self.st_frame_info: MV_FRAME_OUT = MV_FRAME_OUT()
+
+        self._thread_handle: Optional[threading.Thread] = None
+        self._buffer_lock: threading.Lock = threading.Lock()
+
+        self._frame_callback = frame_callback
 
     def _init_mvs_sdk(self):
         try:
             MvCamera.MV_CC_Initialize()
         except Exception:
             logger.error(
-                f"Failed to initialize MVS SDK: {traceback.format_exc()}. Make sure it is installed and if it's not located at C:\Program Files (x86)\Common Files\MVS\Runtime\Win64_x64 that you manually add it to the PATH variable"
+                f"Failed to initialize MVS SDK: {traceback.format_exc()}. Make sure it is installed and if it's not located at C:/Program Files (x86)/Common Files/MVS/Runtime/Win64_x64 that you manually add it to the PATH variable"
             )
             raise
 
@@ -128,6 +142,11 @@ class MVCH250CameraWrapper:
         if self.obj_cam is None:
             raise RuntimeError("Camera handler is not initialized")
 
+        self._is_grabbing = False
+        if self._thread_handle is not None:
+            self._thread_handle.join(timeout=2)
+            self._thread_handle = None
+
         ret = self.obj_cam.MV_CC_CloseDevice()
 
         if ret != MV_OK:
@@ -143,19 +162,144 @@ class MVCH250CameraWrapper:
         if param_type is None:
             raise ValueError(f"Unknown parameter name: {name}")
 
-        if param_type == "float":
-            stFloatParam = MVCC_FLOATVALUE()
-            memset(byref(stFloatParam), 0, sizeof(stFloatParam))
-            ret = self.obj_cam.MV_CC_GetFloatValue(name, stFloatParam)
-            if ret != 0:
-                logger.warning(f"get float value fail! {to_hex_str(ret)}")
-            logger.debug(f"Parameter {name}: {stFloatParam.fCurValue}")
-            return stFloatParam.fCurValue
+        match param_type:
+            case "float":
+                stFloatParam = MVCC_FLOATVALUE()
+                memset(byref(stFloatParam), 0, sizeof(stFloatParam))
+                ret = self.obj_cam.MV_CC_GetFloatValue(name, stFloatParam)
+                if ret != 0:
+                    logger.warning(f"get float value fail! {to_hex_str(ret)}")
+                logger.debug(f"Parameter {name}: {stFloatParam.fCurValue}")
+                return stFloatParam.fCurValue
+            case "int":
+                stIntParam = MVCC_INTVALUE()
+                memset(byref(stIntParam), 0, sizeof(stIntParam))
+                ret = self.obj_cam.MV_CC_GetIntValue(name, stIntParam)
+                if ret != 0:
+                    logger.warning(f"get int value fail! {to_hex_str(ret)}")
+                logger.debug(f"Parameter {name}: {stIntParam.nCurValue}")
+                return stIntParam.nCurValue
+            case "enum":
+                stEnumParam = MVCC_ENUMVALUE()
+                memset(byref(stEnumParam), 0, sizeof(stEnumParam))
+                ret = self.obj_cam.MV_CC_GetEnumValue(name, stEnumParam)
+                if ret != 0:
+                    logger.warning(f"get enum value fail! {to_hex_str(ret)}")
+                logger.debug(f"Parameter {name}: {stEnumParam.nCurValue}")
+                return stEnumParam.nCurValue
 
-    def set_parameter(self, name: str, value: Any) -> bool:
+    def set_parameter(self, name: str, value: int | float) -> None:
         if self._is_open is False:
             raise RuntimeError("Camera is not open")
-        raise NotImplementedError("Replace with Hikrobot control setters")
+        param_type = MV_CH250_PARAM_TYPE.get(name)
+        if param_type is None:
+            raise ValueError(f"Unknown parameter name: {name}")
+
+        match param_type:
+            case "float":
+                stFloatParam = MVCC_FLOATVALUE()
+                memset(byref(stFloatParam), 0, sizeof(stFloatParam))
+                stFloatParam.fCurValue = float(value)
+                ret = self.obj_cam.MV_CC_SetFloatValue(name, stFloatParam)
+                if ret != 0:
+                    logger.warning(f"set float value fail! {to_hex_str(ret)}")
+            case "int":
+                stIntParam = MVCC_INTVALUE()
+                memset(byref(stIntParam), 0, sizeof(stIntParam))
+                stIntParam.nCurValue = int(value)
+                ret = self.obj_cam.MV_CC_SetIntValue(name, stIntParam)
+                if ret != 0:
+                    logger.warning(f"set int value fail! {to_hex_str(ret)}")
+            case "enum":
+                stEnumParam = MVCC_ENUMVALUE()
+                memset(byref(stEnumParam), 0, sizeof(stEnumParam))
+                stEnumParam.nCurValue = int(value)
+                ret = self.obj_cam.MV_CC_SetEnumValue(name, stEnumParam)
+                if ret != 0:
+                    logger.warning(f"set enum value fail! {to_hex_str(ret)}")
+
+    def start_grabbing(self) -> None:
+        if self._is_open is False:
+            raise RuntimeError("Camera is not open")
+
+        ret = self.obj_cam.MV_CC_StartGrabbing()
+        if ret != 0:
+            logger.warning(f"start grabbing fail! {to_hex_str(ret)}")
+
+        try:
+            self._is_grabbing = True
+            self._thread_handle = threading.Thread(target=self._grab_images)
+            self._thread_handle.start()
+        except Exception as e:
+            logger.error(f"start grabbing thread fail! {e}")
+
+    def _grab_images(self) -> None:
+        stOutFrame = MV_FRAME_OUT()
+        memset(byref(stOutFrame), 0, sizeof(stOutFrame))
+
+        try:
+            while self._is_grabbing:
+                try:
+                    ret = self.obj_cam.MV_CC_GetImageBuffer(stOutFrame, 1000)
+                    if 0 == ret:
+                        # Copy image and image info
+                        if self._last_frame is None:
+                            self._last_frame = (
+                                c_ubyte * stOutFrame.stFrameInfo.nFrameLen
+                            )()
+                        self.st_frame_info = stOutFrame.stFrameInfo
+
+                        self._buffer_lock.acquire()
+                        try:
+                            cdll.msvcrt.memcpy(
+                                byref(self._last_frame),
+                                stOutFrame.pBufAddr,
+                                self.st_frame_info.nFrameLen,
+                            )
+                        finally:
+                            self._buffer_lock.release()
+
+                        logger.debug(
+                            "got one frame: Width[%d], Height[%d], nFrameNum[%d], FrameLen[%d]"
+                            % (
+                                self.st_frame_info.nWidth,
+                                self.st_frame_info.nHeight,
+                                self.st_frame_info.nFrameNum,
+                                self.st_frame_info.nFrameLen,
+                            )
+                        )
+                        # Call frame callback if set
+                        if self._frame_callback is not None:
+                            try:
+                                arr = np.ctypeslib.as_array(
+                                    self._last_frame,
+                                    shape=(
+                                        self.st_frame_info.nHeight,
+                                        self.st_frame_info.nWidth,
+                                    ),
+                                )
+                                logger.debug(
+                                    f"Callback: arr.shape={arr.shape}, dtype={arr.dtype}, width={self.st_frame_info.nWidth}, height={self.st_frame_info.nHeight}"
+                                )
+                                self._frame_callback(arr, self.st_frame_info)
+                            except Exception as e:
+                                logger.error(
+                                    f"Error in frame callback: {e}", exc_info=True
+                                )
+                        # Free buffer
+                        self.obj_cam.MV_CC_FreeImageBuffer(stOutFrame)
+                    else:
+                        logger.warning(f"No data to grab, ret = {to_hex_str(ret)}")
+                        if not self._is_grabbing or not self._is_open:
+                            break
+                        continue
+                except Exception as inner:
+                    logger.error(f"Exception in grabbing loop: {inner}", exc_info=True)
+                    break
+        except Exception as thread_exc:
+            logger.error(
+                f"Fatal exception in grabbing thread: {thread_exc}", exc_info=True
+            )
 
     def __enter__(self):
         self.open()
