@@ -97,6 +97,7 @@ demo-ui = [
 notebooks = [
     { name = "ipywidgets" },
     { name = "jupyter" },
+    { name = "jupyter-rfb" },
 ]
 
 [package.dev-dependencies]
@@ -110,6 +111,7 @@ requires-dist = [
     { name = "genicam", specifier = ">=1.2" },
     { name = "ipywidgets", marker = "extra == 'notebooks'", specifier = ">=8.1.7" },
     { name = "jupyter", marker = "extra == 'notebooks'", specifier = ">=1.1.1" },
+    { name = "jupyter-rfb", marker = "extra == 'notebooks'", specifier = ">=0.5.3" },
     { name = "mvimport", editable = "MvImport" },
     { name = "numpy", specifier = "~=1.21" },
     { name = "opencv-python", specifier = ">=4.11.0.86" },
@@ -678,6 +680,20 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/28/3d/40bdb41b665d3302390ed1356cebd5917c10769d1f190ee4ca595900840e/jupyter_lsp-2.2.6.tar.gz", hash = "sha256:0566bd9bb04fd9e6774a937ed01522b555ba78be37bebef787c8ab22de4c0361", size = 48948, upload-time = "2025-07-18T21:35:19.885Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/47/7c/12f68daf85b469b4896d5e4a629baa33c806d61de75ac5b39d8ef27ec4a2/jupyter_lsp-2.2.6-py3-none-any.whl", hash = "sha256:283783752bf0b459ee7fa88effa72104d87dd343b82d5c06cf113ef755b15b6d", size = 69371, upload-time = "2025-07-18T21:35:16.585Z" },
+]
+
+[[package]]
+name = "jupyter-rfb"
+version = "0.5.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "ipywidgets" },
+    { name = "jupyterlab-widgets" },
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/76/c0/1f32b336cc45403c1f0dd097d4cc60fd0241d2889d79c2d1f85ab6750a4f/jupyter_rfb-0.5.3.tar.gz", hash = "sha256:45549b1b36614195f76d33a1c299b21628d5aa4b3b4ed9a4b49b4888c98b2191", size = 756503, upload-time = "2025-05-09T08:31:15.837Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/55/87/a1a93eb95325558f40425c220746b084a008a88db8d88eb331b6a4652b04/jupyter_rfb-0.5.3-py3-none-any.whl", hash = "sha256:21407167ce3eaf2e6f453e8bc6c32df0edda0956b6a6207f705f7fe11fd42e75", size = 31075, upload-time = "2025-05-09T08:31:14.268Z" },
 ]
 
 [[package]]

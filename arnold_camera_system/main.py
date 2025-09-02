@@ -6,9 +6,9 @@ import cv2
 import numpy as np
 from MvCameraControl_class import _MV_DISPLAY_FRAME_INFO_
 
-from camera.hsi.fx17_wrapper import FX17CameraWrapper
-from camera.rgb.mvch250_param_types import MV_CH250_PARAM_TYPE
-from camera.rgb.mvch250_wrapper import MVCH250CameraWrapper
+from arnold_camera_system.camera.hsi.fx17_wrapper import FX17CameraWrapper
+from arnold_camera_system.camera.rgb.mvch250_param_types import MV_CH250_PARAM_TYPE
+from arnold_camera_system.camera.rgb.mvch250_wrapper import MVCH250CameraWrapper
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)

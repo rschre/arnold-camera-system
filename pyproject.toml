@@ -18,7 +18,11 @@ authors = [
 ]
 
 [project.optional-dependencies]
-notebooks = ["ipywidgets>=8.1.7", "jupyter>=1.1.1"]
+notebooks = [
+    "ipywidgets>=8.1.7",
+ "jupyter>=1.1.1",
+ "jupyter-rfb>=0.5.3",
+]
 demo-ui = ["pyqt5==5.15.11", "pyqt5-qt==5.15.2", "pyqt5-sip==12.17.0"]
 
 [dependency-groups]
@@ -41,5 +45,6 @@ module = [
     "MvErrorDefine_const",
     "CameraParams_header",
     "cv2",
+    "spectralcam.*"
 ]
 ignore_missing_imports = true
