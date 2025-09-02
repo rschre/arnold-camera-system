@@ -1,6 +1,7 @@
 import logging
 import threading
 import traceback
+from ctypes import POINTER, byref, c_bool, c_ubyte, cast, cdll, memset, sizeof
 from typing import Any, Callable, Optional
 
 import numpy as np
@@ -14,15 +15,7 @@ from MvCameraControl_class import (
     MVCC_ENUMVALUE,
     MVCC_FLOATVALUE,
     MVCC_INTVALUE,
-    POINTER,
     MvCamera,
-    byref,
-    c_bool,
-    c_ubyte,
-    cast,
-    cdll,
-    memset,
-    sizeof,
 )
 from MvErrorDefine_const import MV_OK
 
@@ -61,7 +54,7 @@ class MVCH250CameraWrapper:
 
         self._is_open: bool = False
         self._is_grabbing: bool = False
-        self._last_frame: Optional[np.ndarray] = None
+        self._last_frame: Optional[c_ubyte] = None
         self._last_timestamp: Optional[float] = None
         self.st_frame_info: MV_FRAME_OUT = MV_FRAME_OUT()
 
@@ -145,6 +138,11 @@ class MVCH250CameraWrapper:
         ret = self.obj_cam.MV_CC_SetEnumValue("TriggerMode", MV_TRIGGER_MODE_OFF)
         if ret != 0:
             logger.warning(f"set trigger mode fail! {to_hex_str(ret)}")
+
+        # do autoexposure once
+        ret = self.obj_cam.MV_CC_SetEnumValue("ExposureAuto", 1)
+        if ret != 0:
+            logger.warning(f"set exposure auto fail! {to_hex_str(ret)}")
 
     def close(self) -> None:
         if self.obj_cam is None:
@@ -267,6 +265,8 @@ class MVCH250CameraWrapper:
 
                         self._buffer_lock.acquire()
                         try:
+                            if self._last_frame is None:
+                                continue
                             cdll.msvcrt.memcpy(
                                 byref(self._last_frame),
                                 stOutFrame.pBufAddr,
